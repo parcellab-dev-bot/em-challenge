@@ -8,4 +8,5 @@ Document your key decisions, tradeoffs, and any test changes.
 
 ## Production readiness
 
-If this shipped to production for 50 brands tomorrow, what breaks first? What would you change?
+If this shipped to production for 50 brands tomorrow, what breaks first? What would you
+change?
