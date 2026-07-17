@@ -8,6 +8,7 @@ used in the config file.
 
 from __future__ import annotations
 
+import logging
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from datetime import datetime
@@ -17,6 +18,8 @@ from typing import Any, ClassVar
 import yaml
 
 from portal.types import Article, ArticleEligibility, Order
+
+logger = logging.getLogger(__name__)
 
 _RULES_PATH = Path(__file__).resolve().parent.parent / "data" / "rules.yaml"
 
@@ -140,6 +143,16 @@ def evaluate_eligibility(order: Order) -> list[ArticleEligibility]:
         A list of :class:`ArticleEligibility`, one per article in the order.
     """
     rules = _load_rules()
+
+    logger.info(
+        "Evaluating eligibility for order %s — %s <%s>, %s, %s %s",
+        order.order_number,
+        order.recipient,
+        order.email,
+        order.street,
+        order.zip,
+        order.city,
+    )
 
     results: list[ArticleEligibility] = []
     for article in order.articles:
