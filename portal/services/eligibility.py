@@ -54,9 +54,11 @@ class RuleRegistry:
 
     @classmethod
     def create(cls, rule_id: str, config: dict[str, Any]) -> Rule:
-        if rule_id not in cls._registry:
-            raise KeyError(f"Unknown eligibility rule: {rule_id!r}")
-        return cls._registry[rule_id](config)
+        if rule_id in cls._registry:
+            return cls._registry[rule_id](config)
+        if "condition" in config:
+            return ConditionRule(config)
+        raise KeyError(f"Unknown eligibility rule: {rule_id!r}")
 
 
 @RuleRegistry.register("already_returned")
@@ -98,6 +100,26 @@ class ReturnWindowRule(Rule):
         age_days = (datetime.now() - order.delivery_date).days
         if age_days > days:
             return f"The {days}-day return window has expired."
+        return None
+
+
+class ConditionRule(Rule):
+    """A rule defined entirely in config via a ``condition`` expression.
+
+    The expression is evaluated with ``article`` and ``order`` in scope, e.g.::
+
+        - id: high_value_manual
+          condition: "article.price >= 500"
+          reason: "High-value items must be returned through customer support."
+
+    This is what makes the engine fully configurable for enterprise
+    customers — new rules ship as config, not code.
+    """
+
+    def evaluate(self, article: Article, order: Order) -> str | None:
+        condition = str(self.config["condition"])
+        if eval(condition, {"article": article, "order": order}):
+            return str(self.config.get("reason", "This item cannot be returned."))
         return None
 
 
