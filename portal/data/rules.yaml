@@ -1,0 +1,7 @@
+# Return eligibility rules — evaluated top to bottom, first match wins.
+rules:
+  - id: already_returned
+  - id: digital
+  - id: final_sale
+  - id: return_window
+    days: 30
