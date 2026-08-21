@@ -1,30 +1,36 @@
-# parcelLab — Returns Portal
+# parcelLab Returns Portal: Engineering Manager Challenge
 
 ## The situation
 
-You're joining the returns team for a day. We run the customer-facing returns portals
-for many well-known brands. Customers use them to look up an order, see which items are
-eligible for return, and submit a request. You may have used one yourself. The portal is
-live, but it's rough around the edges: the previous engineer left before finishing some
-critical backend work, tests are failing, and a few things are broken.
+You have joined parcelLab as Engineering Manager for the returns team. The team owns
+customer-facing portals where shoppers find an order, check which items are eligible for
+return, and submit a request.
 
-Below is the current backlog. The first three tasks (BR-001–003) are required; **you
-don't have to do everything else** — pick the electives that best show what you can do,
-and explain your choices in `DECISIONS.md`.
+The portal is live but incomplete. Backend work is unfinished, tests are failing, and
+part of the return flow is broken. You have a small team and need to decide what to
+prioritize.
 
-> Please do not fork this repository. Clone it directly, work locally, and submit a
-> personal repository on GitHub, GitLab, or Codeberg, or send us a zip file.
+The challenge has three parts. Complete them in order and manage your time across them.
+
+> **Time limit: 4 hours total.** Stop when the time is up and submit your current work.
+> A well-reasoned partial solution is preferable to a rushed complete one. Suggested
+> split: Part 1 ≈ 90 min · Part 2 ≈ 30 min · Part 3 ≈ 60 min · write-ups ≈ 15 min.
+
+> Please do not fork or publish this repository. Work locally and submit as a private
+> repo share or a zip file.
+
+You may use AI tools. If you do, keep a brief record in `AI_LOG.md` of how you used
+them.
 
 ## Getting started
 
-**Stack:** Python 3.12+, Django, pytest, Ruff, mypy. PyYAML is included if you want it
-for rules config.
+**Stack:** Python 3.13+, Django, DRF, pytest, ruff, mypy (strict). PyYAML is available.
 
 ```bash
 uv sync
 
-uv run pytest              # you'll see some failures — that's intentional
-uv run python manage.py runserver
+pytest              # you'll see some failures — that's intentional
+python manage.py runserver
 ```
 
 Open <http://localhost:8000/returns/> and try order `RMA-1001` with email
@@ -35,140 +41,150 @@ Open <http://localhost:8000/returns/> and try order `RMA-1001` with email
 ```
 portal/
   data/orders_raw.json      # raw order payloads from upstream
-  data/                     # your rules config goes here (you define the format)
   services/mapper.py        # maps raw payload → domain model (incomplete)
-  services/eligibility.py   # return eligibility evaluator (stubbed)
+  services/eligibility.py   # return eligibility evaluator (stubbed on main)
   templates/returns/*       # Django + HTMX UI
   tests/*                   # pytest suite (some tests intentionally failing)
 ```
 
-## Ground rules
+## Your team
 
-> **Time limit: 4 hours.** If you hit the limit, stop and submit what you have. We'd
-> rather see clean, well-reasoned partial work than a rushed complete solution.
-
-**AI tools** are welcome. If you use them, note which tools you used and what for in
-`AI_LOG.md`.
-
-## The backlog
-
-**BR-001, BR-002, and BR-003 are required.** We use those three to compare submissions.
-Everything else is an elective: pick one or two, skip the rest, and explain your choices
-in `DECISIONS.md`.
+- **Thomas:** senior engineer, 6 years at parcelLab, with deep domain knowledge. Thomas
+  started a four-week sabbatical on Friday and is unreachable.
+- **Andrej:** senior engineer, joined 8 months ago, with strong backend and
+  infrastructure experience. Andrej spends half his time with the carrier integrations
+  team.
+- **Julia:** mid-level engineer, joined 1.5 years ago. Julia is reliable, eager to grow,
+  and has not yet led a project alone.
 
 ---
+
+## Part 1 · Ship something (~90 min)
+
+Choose one item from the backlog below and implement it. Select the work where your
+direct contribution is most useful. In `DECISIONS.md`, explain your choice, why you did
+not choose the other items, and how you would assign the remaining work.
+
+> BR-002 is not an option. Thomas implemented it before leaving; you will review that
+> work in Part 2.
 
 ### BR-001 · Complete the mapper gaps
 
-Our upstream order system sends detailed payloads, but the mapper was left unfinished —
-item-level flags never got wired up. The eligibility engine needs these to make
-decisions.
+The mapper does not populate several item-level fields required by the eligibility
+engine.
 
-Missing fields on each article:
+Missing fields on each article: `is_digital`, `is_final_sale`, `category`.
 
-- `is_digital`
-- `is_final_sale`
-- `category`
-
-Look at the raw data in `orders_raw.json` and the test fixtures to understand the
-different payload shapes you need to handle.
-
----
-
-### BR-002 · Build the return eligibility engine
-
-Right now, `evaluate_eligibility()` just marks everything as returnable. We need a real
-rules engine — one that's configurable, not hardcoded.
-
-Design your own rules format (JSON, YAML, whatever you prefer) and implement the
-evaluator. It should return a clear result per item (returnable or not, reason, matched
-rule) and handle at least:
-
-- Return window (delivered date + allowed days)
-- Already fully returned
-- Digital items
-- Final-sale items
-
-We intentionally don't provide a rules file — we want to see how you'd structure it.
-
----
+Look at `orders_raw.json` and the test fixtures to understand the different payload
+shapes you need to handle.
 
 ### BR-003 · Fix and extend the test suite
 
-Several tests are failing. Some depend on BR-001 and BR-002 being done, others may have
-their own issues. Make the suite green and add tests that give you confidence in your
-implementation.
-
----
+Several tests are failing. Some depend on BR-001 or BR-002; others may have separate
+causes. Fix the suite and add any tests needed to cover your changes.
 
 ### BR-004 · Category-specific return windows
 
-Product just told us that different categories need different return windows.
-Electronics should be 14 days, apparel gets 30, and so on. Add per-category window
-config to the rules engine and make the evaluator use it. Fall back to the order-level
-default when a category isn't configured.
-
----
+Add configurable return windows by category, such as 14 days for electronics and 30 days
+for apparel. Use the order-level window when a category has no specific setting.
 
 ### SEC-001 · Security audit
 
-A security researcher has contacted us claiming they can access customer order data they
-shouldn't be able to. They want a fee to disclose the details. We'd rather understand
-our own exposure.
-
-Audit the portal's **authentication and authorization model** — how a customer proves
-who they are, and how the app decides what they're allowed to see. We're not looking for
-a single planted bug; we want your assessment of the system.
-
-Produce a short write-up (in `DECISIONS.md` or a `SECURITY.md`) that:
-
-- **Lists the threats you found** — each with a one-line description of how it's
-  exploited and what it exposes.
-- **Ranks them by real-world exploitability** — not theoretical severity. A trivially
-  scriptable attack against live customer data outranks one that needs a session you
-  can't get.
-- **Fixes the one you judge most important**, with a test that demonstrates the exploit
-  before the fix and its absence after.
-- **Says why you deprioritized the rest** — what you'd do with another day, and what
-  you'd escalate to the team rather than fix solo.
-
-We care more about how you reason about the exposure and where you choose to spend
-limited time than about the length of the list.
-
----
+A security researcher claims that the portal allows unauthorized access to customer
+order data (see Part 3). Audit the codebase, identify the issue, write a test that
+demonstrates it, and fix it.
 
 ### FR-001 · Show returnable items only
 
-Support keeps asking: can customers filter the articles list to only see what's actually
-returnable? Add a "Show returnable only" toggle using HTMX — no full page reload.
-
----
+Add a "Show returnable only" toggle to the articles list using HTMX, without a full page
+reload.
 
 ### FR-002 · Fix the return submission flow
 
-The "Continue" button on the articles page is dead — the rest of the flow was apparently
-deleted before the last push. Build the missing pieces: article selection → confirmation
-→ success. A customer should be able to complete a return end-to-end, and a submitted
-return must survive a server restart — persist it.
-
-One thing support keeps seeing: impatient customers double-click submit, or hit refresh
-on the success page. Decide what should happen in both cases and implement it.
+The "Continue" button on the articles page does nothing. Implement the missing flow:
+article selection → confirmation → success.
 
 ---
 
-### OPEN-001 · Surprise us
+## Part 2 · Review Thomas's PR (~30 min)
 
-If you spot another useful improvement, you can take it on. Keep it small and describe
-it in `DECISIONS.md`.
+Before leaving, Thomas pushed the return eligibility engine (BR-002) on branch
+**`feature/BR-002-eligibility-engine`** with this note:
+
+> _"Eligibility engine done, all eligibility tests green. Built it config-driven so
+> enterprise customers can get custom rules without code changes. Fine to merge without
+> me. — T"_
+
+The PR is also available on GitHub:
+<https://github.com/parcellab-dev-bot/em-challenge/pulls>
+
+Review the branch and record the result in `REVIEW.md`:
+
+- List your findings and distinguish merge blockers from non-blocking feedback.
+- Choose a merge decision: merge, merge with follow-ups, or request changes. State what
+  should happen to the branch while Thomas is away.
+- Address the review to Thomas, who will read it on return. Use an appropriate tone for
+  an experienced engineer with longstanding ownership of the codebase.
+
+```bash
+git diff em-challenge...feature/BR-002-eligibility-engine   # the full change
+git log em-challenge..feature/BR-002-eligibility-engine     # Thomas's commits
+```
+
+> **Optional:** To review inline, push both branches to your own repository and open a
+> PR there. Submit either `REVIEW.md` or a link to that PR.
+
+---
+
+## Part 3 · Monday morning memo (~60 min)
+
+At 9:00 on your first Monday, you receive these messages:
+
+**From: mailer@relay-anon.net — Subject: Vulnerability in your returns portal**
+
+> I have identified a vulnerability in your returns portal that allows access to any
+> customer's order data — names, home addresses, emails, purchase history. Works today,
+> on production. I am giving you the chance to fix this before it becomes public. My fee
+> for the full technical details is €15,000. You have two weeks. Payment instructions
+> follow on confirmation.
+
+**From: Dani (VP Sales) — Subject: NordThreads demo — 2 weeks!!**
+
+> Team — huge news, NordThreads (potentially our biggest returns customer ever) agreed
+> to a live demo in two weeks. They specifically want to see a customer completing a
+> return end-to-end in the portal. I told them no problem 🙂
+>
+> Also — they asked whether their team could configure their own return rules per
+> market themselves (they run 14 country organizations with different return
+> policies). I said that's basically what our platform does 🙂 Can you confirm both?
+
+Available engineering capacity is Andrej at 50%, Julia at 100%, and you. Thomas is
+unreachable. Write `PLAN.md` containing:
+
+1. A two-week plan covering priorities, sequence, ownership (including your work),
+   excluded work, and accepted risks. Limit this to one page.
+2. **Beyond the demo:** NordThreads' rules question is a product decision, not a
+   scheduling one. In 5–10 lines: what should the rules capability become, what would
+   you commit to now, and what would you refuse to build even for our biggest
+   customer? Take a position; don't list options.
+3. A reply to Dani. She is non-technical and has already committed to the demo. Decide
+   what she needs to know, whether to mention the security report, and how you answer
+   the rules question she has already half-promised.
+
+A reply to the researcher is optional. If included, limit it to 2–3 sentences on how the
+company should handle the report.
 
 ---
 
 ## What to submit
 
-- Working, type-safe code
-- Small, readable commits
-- `DECISIONS.md` — what you picked, what you skipped, and why
-- `AI_LOG.md` — if you used AI tools
+- Your Part 1 implementation: working, type-safe code in small, readable commits
+- `REVIEW.md`: your review of Thomas's PR
+- `PLAN.md`: the two-week plan, your position on the rules capability, and the reply
+  to Dani
+- `DECISIONS.md`: your choice, delegation decisions, and rationale
+- `AI_LOG.md`: your AI tool record, if applicable, and a short answer to this question:
+  What review standard would you apply to AI-generated code on your team?
 
 ---
 
