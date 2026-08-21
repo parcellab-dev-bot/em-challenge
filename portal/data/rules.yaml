@@ -1,0 +1,13 @@
+# Return eligibility rules — evaluated top to bottom, first match wins.
+rules:
+  - id: already_returned
+  - id: digital
+  - id: final_sale
+  - id: return_window
+    days: 30
+
+  # Fully config-driven custom rule — no code change or deploy needed.
+  # Anything on `article` or `order` can be referenced in the condition.
+  - id: high_value_manual
+    condition: "article.price >= 500"
+    reason: "High-value items must be returned through customer support."

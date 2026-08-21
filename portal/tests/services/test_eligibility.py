@@ -93,13 +93,13 @@ class TestAlreadyReturned:
         assert results[0].returnable is False
 
     def test_partially_returned_is_still_returnable(self) -> None:
-        """An item with remaining quantity should still be returnable."""
+        """Any prior return on a line item closes it for further returns."""
         order = _make_order(
             delivery_date=datetime.now() - timedelta(days=5),
             articles=[_make_article(quantity=3, quantity_returned=1)],
         )
         results = evaluate_eligibility(order)
-        assert results[0].returnable is True
+        assert results[0].returnable is False
 
 
 class TestReturnWindow:
